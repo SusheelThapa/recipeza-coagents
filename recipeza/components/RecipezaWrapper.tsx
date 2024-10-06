@@ -1,20 +1,20 @@
 import { HomeView } from "./HomeView";
 import { ResultsView } from "./ResultsView";
 import { AnimatePresence } from "framer-motion";
-import { useResearchContext } from "@/lib/recipeza-provider";
+import { useRecipezaContext } from "@/lib/recipeza-provider";
 
-export function ResearchWrapper() {
-  const { researchQuery, setResearchInput } = useResearchContext();
+export function RecipezaWrapper() {
+  const { recipezaQuery, setRecipezaInput } = useRecipezaContext();
 
   return (
     <>
       <div className="flex flex-col items-center justify-center relative z-10">
         <div className="flex-1">
-          {researchQuery ? (
+          {recipezaQuery ? (
             <AnimatePresence
               key="results"
               onExitComplete={() => {
-                setResearchInput("");
+                setRecipezaInput("");
               }}
               mode="wait"
             >

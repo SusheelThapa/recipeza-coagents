@@ -1,19 +1,15 @@
 "use client";
 
-import { useResearchContext } from "@/lib/research-provider";
+import { useRecipezaContext } from "@/lib/recipeza-provider";
 import { motion } from "framer-motion";
-import {
-  BookOpenIcon,
-  LoaderCircleIcon,
-  SparkleIcon,
-} from "lucide-react";
+import { BookOpenIcon, LoaderCircleIcon, SparkleIcon } from "lucide-react";
 import { SkeletonLoader } from "./SkeletonLoader";
 import { useCoAgent } from "@copilotkit/react-core";
 import { Progress } from "./Progress";
 import { AnswerMarkdown } from "./AnswerMarkdown";
 
 export function ResultsView() {
-  const { researchQuery } = useResearchContext();
+  const { recipezaQuery } = useRecipezaContext();
   const { state: agentState } = useCoAgent({
     name: "search_agent",
   });
@@ -40,7 +36,9 @@ export function ResultsView() {
     >
       <div className="max-w-[1000px] p-8 lg:p-4 flex flex-col gap-y-8 mt-4 lg:mt-6 text-sm lg:text-base">
         <div className="space-y-4">
-          <h1 className="text-3xl lg:text-4xl font-extralight">{researchQuery}</h1>
+          <h1 className="text-3xl lg:text-4xl font-extralight">
+            {recipezaQuery}
+          </h1>
         </div>
 
         <Progress steps={steps} />
