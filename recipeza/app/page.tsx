@@ -7,7 +7,7 @@ import "@copilotkit/react-ui/styles.css";
 
 export default function Home() {
   return (
-    <main className="flex flex-col items-center justify-between">
+    <main className="flex flex-col items-center justify-between bg-black min-h-screen ">
       <CopilotKit
         runtimeUrl="/api/copilotkit"
         agent="recipe_agent"

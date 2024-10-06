@@ -1,36 +1,40 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "./ui/textarea";
-import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { CornerDownLeftIcon } from "lucide-react";
 import { useResearchContext } from "@/lib/research-provider";
 import { motion } from "framer-motion";
-import { useCopilotChat } from "@copilotkit/react-core";
-import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import { useCoAgent } from "@copilotkit/react-core";
 
 const MAX_INPUT_LENGTH = 250;
 
 export function HomeView() {
-  const { setResearchQuery, researchInput, setResearchInput } =
-    useResearchContext();
+  const { setResearchQuery, researchInput, setResearchInput } = useResearchContext();
   const [isInputFocused, setIsInputFocused] = useState(false);
   const { run: runResearchAgent } = useCoAgent({
     name: "search_agent",
   });
 
-  const handleResearch = (query: string) => {
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleColorSchemeChange = (e) => {
+      document.documentElement.classList.toggle('dark', e.matches);
+    };
+    mediaQuery.addEventListener('change', handleColorSchemeChange);
+    handleColorSchemeChange(mediaQuery);
+    return () => mediaQuery.removeEventListener('change', handleColorSchemeChange);
+  }, []);
+
+  const handleResearch = (query) => {
     setResearchQuery(query);
     runResearchAgent(query);
   };
 
   const suggestions = [
-    { label: "Electric cars sold in 2024 vs 2023", icon: "🚙" },
-    { label: "Top 10 richest people in the world", icon: "💰" },
-    { label: "Population of the World", icon: "🌍 " },
-    { label: "Weather in Seattle VS New York", icon: "⛅️" },
+    { label: "Top recipes for dinner", icon: "🍴" },
+    { label: "Healthy breakfast options", icon: "🥑" },
+    { label: "Quick lunch recipes", icon: "🍜" },
+    { label: "Best dessert discoveries", icon: "🍰" },
   ];
 
   return (
@@ -38,67 +42,50 @@ export function HomeView() {
       initial={{ opacity: 0, y: -50 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
-      className="h-screen w-full flex flex-col gap-y-2 justify-center items-center p-4 lg:p-0"
+      transition={{ duration: 0.5 }}
+      className="h-screen w-full flex flex-col gap-y-4 justify-center items-center p-4"
     >
-      <h1 className="text-4xl font-extralight mb-6">
-        What would you like to know?
-      </h1>
-
+      <h1 className="text-6xl font-bold mb-4 dark:text-gray-100">Recipeza</h1>
       <div
-        className={cn(
-          "w-full bg-slate-100/50 border shadow-sm rounded-md transition-all",
-          {
-            "ring-1 ring-slate-300": isInputFocused,
-          }
-        )}
+        className={`w-full max-w-xl bg-white shadow-lg rounded-lg overflow-hidden dark:bg-gray-800 p-4 ${isInputFocused ? "ring-2 ring-primary-500" : ""}`}
       >
         <Textarea
-          placeholder="Ask anything..."
-          className="bg-transparent p-4 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 border-0 w-full"
+          placeholder="Search delicious recipes..."
+          className="w-full text-lg p-3 border-none focus:outline-none dark:bg-gray-800 dark:text-gray-100"
           onFocus={() => setIsInputFocused(true)}
           onBlur={() => setIsInputFocused(false)}
           value={researchInput}
           onChange={(e) => setResearchInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               handleResearch(researchInput);
             }
           }}
           maxLength={MAX_INPUT_LENGTH}
         />
-        <div className="text-xs p-4 flex items-center justify-between">
-          <div
-            className={cn("transition-all duration-300 mt-4 text-slate-500", {
-              "opacity-0": !researchInput,
-              "opacity-100": researchInput,
-            })}
-          >
+        <div className="flex items-center justify-between mt-2">
+          <div className={`text-sm ${researchInput ? "text-gray-500" : "text-gray-400"}`}>
             {researchInput.length} / {MAX_INPUT_LENGTH}
           </div>
           <Button
-            size="sm"
-            className={cn("rounded-full transition-all duration-300", {
-              "opacity-0 pointer-events-none": !researchInput,
-              "opacity-100": researchInput,
-            })}
+            className={`transition-opacity duration-300 ${researchInput ? "opacity-100" : "opacity-0 pointer-events-none"}`}
             onClick={() => handleResearch(researchInput)}
           >
-            Research
-            <CornerDownLeftIcon className="w-4 h-4 ml-2" />
+            Search
+            <CornerDownLeftIcon className="ml-2" />
           </Button>
         </div>
       </div>
-      <div className="grid grid-cols-2 w-full gap-2 text-sm">
+      <div className="grid grid-cols-2 gap-3 w-full max-w-xl mt-4">
         {suggestions.map((suggestion) => (
           <div
             key={suggestion.label}
             onClick={() => handleResearch(suggestion.label)}
-            className="p-2 bg-slate-100/50 rounded-md border col-span-2 lg:col-span-1 flex cursor-pointer items-center space-x-2 hover:bg-slate-100 transition-all duration-300"
+            className="bg-gray-200 dark:bg-gray-700 p-3 rounded-lg cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
           >
-            <span className="text-base">{suggestion.icon}</span>
-            <span className="flex-1">{suggestion.label}</span>
+            <span className="text-2xl">{suggestion.icon}</span>
+            <span className="text-lg dark:text-gray-200">{suggestion.label}</span>
           </div>
         ))}
       </div>
