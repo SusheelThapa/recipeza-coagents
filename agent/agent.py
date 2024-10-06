@@ -9,24 +9,19 @@ from langchain.tools import BaseTool
 import requests
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+from langgraph.checkpoint.memory import MemorySaver
 
-# Load environment variables from the .env file
 load_dotenv()
 
-# Provide the API key directly
-openai_api_key = os.getenv("OPENAI_API_KEY")  # Replace with your actual OpenAI API key
+openai_api_key = os.getenv("OPENAI_API_KEY") 
 
-# Set custom base URL for OpenAI API
-custom_base_url = os.getenv("OPENAI_BASE_URL")  # Replace this with your desired base URL
+custom_base_url = os.getenv("OPENAI_BASE_URL")  
 
 spoonacular_api_key = os.getenv("SPOONACULAR_API_KEY")
 
-# Set the model with the provided API key and custom base URL
 model = ChatOpenAI(model="gpt-4o-mini",temperature=0, openai_api_key=openai_api_key, base_url=custom_base_url)
 
 
-
-# Define your FetchRecipeTool similar to other tools
 class FetchRecipeTool(BaseTool):
     name: str = "fetch_recipe_tool"  # Add type annotation
     description: str = "Fetch a recipe based on provided ingredients and return in cookbook format."  # Add type annotation
@@ -86,54 +81,46 @@ class FetchRecipeTool(BaseTool):
         raise NotImplementedError("Async method not implemented.")
 
 
-# Initialize the tool executor with your custom tool
 tools = [FetchRecipeTool()]
 tool_executor = ToolExecutor(tools)
 
-# Define function_1 for handling message processing with the agent
 def function_1(state):
     messages = state['messages']
     response = model.invoke(messages)
+    print(response)
     return {"messages": [response]}
 
-# Define function_2 for invoking the recipe tool
 def function_2(state):
     messages = state['messages']
-    last_message = messages[-1]  # Get the query we need to send to the tool provided by the agent
+    print(messages)
+    last_message = messages[-1]  
 
-    # Parse the tool input from the function call
+
     parsed_tool_input = json.loads(last_message.additional_kwargs["function_call"]["arguments"])
 
-    # Construct a ToolInvocation from the function_call and pass in the tool name and expected input
     action = ToolInvocation(
         tool=last_message.additional_kwargs["function_call"]["name"],
         tool_input=parsed_tool_input['__arg1'],
     )
-
-    # Invoke the tool executor to get a response
+    print(response)
     response = tool_executor.invoke(action)
 
-    # Create a FunctionMessage based on the response
     function_message = FunctionMessage(content=str(response), name=action.tool)
 
-    # Return a list of messages
     return {"messages": [function_message]}
 
-# Define where_to_go for conditional execution
 def where_to_go(state):
     messages = state['messages']
     last_message = messages[-1]
-
-    # Check if "function_call" is present in the last message
+    print("Last message",last_message)
     if "function_call" in last_message.additional_kwargs:
         return "continue"
     else:
         return "end"
 
-# Set up the workflow using StateGraph
 workflow = StateGraph(AgentState)
 
-# Add nodes for agent and tool function execution
+
 workflow.add_node("agent", function_1)
 workflow.add_node("tool", function_2)
 
@@ -146,11 +133,10 @@ workflow.add_conditional_edges(
     }
 )
 
-# Add an edge for calling the agent after the tool
 workflow.add_edge('tool', 'agent')
 
-# Set the entry point of the workflow
 workflow.set_entry_point("agent")
 
-# Compile the workflow into an app
-graph = workflow.compile()
+memory = MemorySaver()
+
+graph = workflow.compile(checkpointer=memory)
